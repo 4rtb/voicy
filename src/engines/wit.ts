@@ -43,9 +43,15 @@ const i18nCodes = {
   Vietnamese: 'vi',
 }
 
-const witLanguages = JSON.parse(process.env.WIT_LANGUAGES)
+// 🔥 ВОТ ТУТ ФИКС
+const witLanguages: Record<string, string> = {
+  English: process.env.WIT_EN || '',
+  Russian: process.env.WIT_RU || '',
+}
+
+// чистим пустые и невалидные
 for (const key of Object.keys(witLanguages)) {
-  if (!i18nCodes[key]) {
+  if (!i18nCodes[key] || !witLanguages[key]) {
     delete witLanguages[key]
   }
 }
@@ -96,6 +102,7 @@ function recognizePath(path, token) {
       },
       timeout: 120 * 1000,
     }
+
     const req = request(options, (res) => {
       const chunks = []
 
@@ -106,72 +113,30 @@ function recognizePath(path, token) {
       res.on('end', () => {
         try {
           const body = Buffer.concat(chunks)
-          try {
-            const json = JSON.parse(body.toString())
-            if (json.error) {
-              const error = new Error(json.error)
-              error.message = `(${json.code}): ${error.message}`
-              try {
-                reject(error)
-              } catch (err) {
-                // Do nothing
-              }
-            } else {
-              try {
-                resolve(json._text)
-              } catch (err) {
-                // Do nothing
-              }
-            }
-          } catch (err) {
-            try {
-              console.log('JSON error:', body.toString())
-              reject(err)
-            } catch (error) {
-              // Do nothing
-            }
+          const json = JSON.parse(body.toString())
+
+          if (json.error) {
+            const error = new Error(json.error)
+            error.message = `(${json.code}): ${error.message}`
+            reject(error)
+          } else {
+            resolve(json._text)
           }
         } catch (err) {
-          try {
-            reject(err)
-          } catch (error) {
-            // Do nothing
-          }
-        }
-      })
-
-      res.on('error', (err) => {
-        try {
+          console.log('JSON error:', err)
           reject(err)
-        } catch (error) {
-          // Do nothing
         }
       })
+
+      res.on('error', reject)
     })
 
-    req.on('error', (err) => {
-      try {
-        reject(err)
-      } catch (error) {
-        // Do nothing
-      }
-    })
+    req.on('error', reject)
 
     const stream = createReadStream(path)
     stream.pipe(req)
-    let error
-    stream.on('error', (err) => {
-      error = err
-    })
-    stream.on('close', () => {
-      if (error) {
-        try {
-          reject(error)
-        } catch (err) {
-          // Do nothing
-        }
-      }
-    })
+
+    stream.on('error', reject)
   })
 }
 
@@ -183,74 +148,37 @@ async function recognize({
   const token =
     chat.witToken ||
     witLanguages[chat.languages[Engine.wit] || defaultLanguageCode]
+
   const iLanguage = chat.languages[Engine.wit]
   const paths = await splitPath(ogaPath, duration)
   const savedPaths = paths.slice()
+
   try {
     let result = []
+
     while (paths.length) {
       const pathsToRecognize = paths.splice(0, 5)
-      const pathsToDelete = pathsToRecognize.slice()
-      const promises = []
+      const promises = pathsToRecognize.map((path) =>
+        recognizePath(path, token)
+      )
+
+      const responses = await Promise.all(promises)
+      result = result.concat(responses.map((r) => (r || '').trim()))
+
       for (const path of pathsToRecognize) {
-        promises.push(
-          // eslint-disable-next-line no-async-promise-executor
-          new Promise(async (res, rej) => {
-            let triesCount = 5
-            let error
-            while (triesCount > 0) {
-              try {
-                const text = await recognizePath(path, token)
-                res(text)
-                return
-              } catch (err) {
-                error = err
-                triesCount -= 1
-                if (
-                  err.message.indexOf('Max audio length is 20 seconds') > -1
-                ) {
-                  break
-                }
-                console.info(
-                  `Retrying ${iLanguage} ${path}, attempts left — ${triesCount}, error: ${err.message}`
-                )
-              }
-            }
-            error.message = `${error.message} (${duration}s)`
-            rej(error)
-          })
-        )
-      }
-      try {
-        const responses = await Promise.all(promises)
-        if (!responses.length) {
-          responses.push('')
-        }
-        result = result.concat(responses.map((r) => (r || '').trim()))
-      } finally {
-        for (const path of pathsToDelete) {
-          deleteFile(path)
-        }
+        deleteFile(path)
       }
     }
+
     const splitDuration = 15
+
     return result.length < 2
       ? [{ timeCode: `0-${duration}`, text: result[0] }]
-      : result.reduce((p, c, i, a) => {
-          if (a.length - 1 === i) {
-            return p.concat([
-              { timeCode: `${i * splitDuration}-${duration}`, text: c },
-            ])
-          }
-          return p.concat([
-            {
-              timeCode: `${i * splitDuration}-${(i + 1) * splitDuration}`,
-              text: c,
-            },
-          ])
-        }, [])
+      : result.map((text, i) => ({
+          timeCode: `${i * splitDuration}-${(i + 1) * splitDuration}`,
+          text,
+        }))
   } finally {
-    // Try deleting the files one more time
     for (const path of savedPaths) {
       deleteFile(path)
     }
@@ -260,14 +188,14 @@ async function recognize({
 const defaultLanguageCode = 'English'
 
 function languageForTelegramCode(telegramCode) {
-  if (!telegramCode) {
-    return defaultLanguageCode
-  }
+  if (!telegramCode) return defaultLanguageCode
+
   for (const key of Object.keys(i18nCodes)) {
     if (telegramCode.toLowerCase().includes(key.toLowerCase())) {
       return key
     }
   }
+
   return defaultLanguageCode
 }
 
