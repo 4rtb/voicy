@@ -8,7 +8,7 @@ import deleteFile from '@/helpers/deleteFile'
 import ffmpeg = require('fluent-ffmpeg')
 import RecognitionResultPart from '@/helpers/engine/RecognitionResultPart'
 
-const i18nCodes = {
+const i18nCodes: Record<string, string> = {
   Arabic: 'ar',
   Bengali: 'bn',
   Burmese: 'my',
@@ -43,34 +43,32 @@ const i18nCodes = {
   Vietnamese: 'vi',
 }
 
-// 🔥 ВОТ ТУТ ФИКС
 const witLanguages: Record<string, string> = {
   English: process.env.WIT_EN || '',
   Russian: process.env.WIT_RU || '',
 }
 
-// чистим пустые и невалидные
 for (const key of Object.keys(witLanguages)) {
   if (!i18nCodes[key] || !witLanguages[key]) {
     delete witLanguages[key]
   }
 }
 
-function splitPath(path, duration) {
+function splitPath(path: string, duration: number): Promise<string[]> {
   const trackLength = 15
   const lastTrackLength = duration % trackLength
 
-  const promises = []
+  const promises: Promise<string>[] = []
   for (let i = 0; i < duration; i += trackLength) {
     const splitDuration =
       i + trackLength <= duration ? trackLength : lastTrackLength
     if (splitDuration > 1) {
       const output = temp.path({ suffix: '.flac' })
       promises.push(
-        new Promise((res, rej) => {
+        new Promise<string>((res, rej) => {
           ffmpeg()
             .input(path)
-            .on('error', (error) => {
+            .on('error', (error: Error) => {
               rej(error)
             })
             .on('end', () => res(output))
@@ -87,8 +85,8 @@ function splitPath(path, duration) {
   return Promise.all(promises)
 }
 
-function recognizePath(path, token) {
-  return new Promise((resolve, reject) => {
+function recognizePath(path: string, token: string): Promise<string> {
+  return new Promise<string>((resolve, reject) => {
     const options = {
       method: 'POST',
       hostname: 'api.wit.ai',
@@ -104,9 +102,9 @@ function recognizePath(path, token) {
     }
 
     const req = request(options, (res) => {
-      const chunks = []
+      const chunks: Buffer[] = []
 
-      res.on('data', (chunk) => {
+      res.on('data', (chunk: Buffer) => {
         chunks.push(chunk)
       })
 
@@ -120,7 +118,7 @@ function recognizePath(path, token) {
             error.message = `(${json.code}): ${error.message}`
             reject(error)
           } else {
-            resolve(json._text)
+            resolve(String(json._text || ''))
           }
         } catch (err) {
           console.log('JSON error:', err)
@@ -140,6 +138,8 @@ function recognizePath(path, token) {
   })
 }
 
+const defaultLanguageCode = 'English'
+
 async function recognize({
   chat,
   duration,
@@ -149,21 +149,20 @@ async function recognize({
     chat.witToken ||
     witLanguages[chat.languages[Engine.wit] || defaultLanguageCode]
 
-  const iLanguage = chat.languages[Engine.wit]
   const paths = await splitPath(ogaPath, duration)
   const savedPaths = paths.slice()
 
   try {
-    let result = []
+    let result: string[] = []
 
     while (paths.length) {
       const pathsToRecognize = paths.splice(0, 5)
-      const promises = pathsToRecognize.map((path) =>
+      const promises: Promise<string>[] = pathsToRecognize.map((path) =>
         recognizePath(path, token)
       )
 
       const responses = await Promise.all(promises)
-      result = result.concat(responses.map((r) => String(r || '').trim()))
+      result = result.concat(responses.map((r: string) => r.trim()))
 
       for (const path of pathsToRecognize) {
         deleteFile(path)
@@ -173,9 +172,12 @@ async function recognize({
     const splitDuration = 15
 
     return result.length < 2
-      ? [{ timeCode: `0-${duration}`, text: result[0] }]
+      ? [{ timeCode: `0-${duration}`, text: result[0] || '' }]
       : result.map((text, i) => ({
-          timeCode: `${i * splitDuration}-${(i + 1) * splitDuration}`,
+          timeCode:
+            i === result.length - 1
+              ? `${i * splitDuration}-${duration}`
+              : `${i * splitDuration}-${(i + 1) * splitDuration}`,
           text,
         }))
   } finally {
@@ -185,9 +187,7 @@ async function recognize({
   }
 }
 
-const defaultLanguageCode = 'English'
-
-function languageForTelegramCode(telegramCode) {
+function languageForTelegramCode(telegramCode?: string): string {
   if (!telegramCode) return defaultLanguageCode
 
   for (const key of Object.keys(i18nCodes)) {
