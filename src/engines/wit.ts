@@ -163,7 +163,7 @@ async function recognize({
       )
 
       const responses = await Promise.all(promises)
-      result = result.concat(responses.map((r) => (r || '').trim()))
+      result = result.concat(responses.map((r) => String(r || '').trim()))
 
       for (const path of pathsToRecognize) {
         deleteFile(path)
