@@ -13,13 +13,11 @@ import checkBanned from '@/handlers/checkBanned'
 import checkDocumentType from '@/middlewares/checkDocumentType'
 import checkFilesBanned from '@/middlewares/checkFilesBanned'
 import checkGoogleCredentials from '@/handlers/checkGoogleCredentials'
-import checkSuperAdmin from '@/middlewares/checkSuperAdmin'
 import configureI18n from '@/middlewares/configureI18n'
 import countMessage from '@/middlewares/countMessage'
 import disallowPrivate from '@/middlewares/disallowPrivate'
 import engines from '@/engines'
 
-import handleAddPromoException from '@/commands/handleAddPromoException'
 import handleAudio from '@/handlers/handleAudio'
 import handleDisableGoogle from '@/commands/handleDisableGoogle'
 import handleEnableGoogle from '@/commands/handleEnableGoogle'
@@ -42,7 +40,6 @@ import handleTimecodes from '@/commands/handleTimecodes'
 import handleTranscribe from './commands/handleTranscribe'
 import handleTranscribeAll from './commands/handleTranscribeAll'
 import handleUrl from '@/commands/handleUrl'
-import handleViewPromoExceptions from './commands/handleViewPromoExceptions'
 import handleWitToken from '@/commands/handleWitToken'
 
 import i18n from '@/helpers/i18n'
@@ -76,7 +73,7 @@ async function runApp() {
     handleAudio
   )
 
-  // Commands (❌ donate УДАЛЕН)
+  // Commands
   bot.command('id', handleId)
   bot.command('start', checkAdminLock, handleStart)
   bot.command('help', checkAdminLock, handleHelp)
@@ -94,8 +91,6 @@ async function runApp() {
   bot.command('disableGoogle', checkAdminLock, handleDisableGoogle)
   bot.command('language', checkAdminLock, handleLanguage)
   bot.command('l', checkAdminLock, handleL)
-  bot.command('addPromoException', checkSuperAdmin, handleAddPromoException)
-  bot.command('viewPromoExceptions', checkSuperAdmin, handleViewPromoExceptions)
   bot.command('transcribeAll', checkAdminLock, handleTranscribeAll)
   bot.command('transcribe', checkAdminLock, handleTranscribe)
 
@@ -113,7 +108,6 @@ async function runApp() {
   console.info(`Bot ${bot.botInfo.username} is up and running`)
 }
 
-// Запуск
 if (Cluster.isPrimary) {
   void runApp()
 }
