@@ -1,12 +1,10 @@
 import 'reflect-metadata'
-// Setup @/ aliases for modules
 import 'module-alias/register'
-// Config dotenv
+
 import * as dotenv from 'dotenv'
 dotenv.config({ path: `${__dirname}/../.env` })
-// Dependencies
+
 import { run } from '@grammyjs/runner'
-import { webhookApp } from '@/helpers/startWebhook'
 import Cluster from '@/helpers/Cluster'
 import attachChat from '@/middlewares/attachChat'
 import bot from '@/helpers/bot'
@@ -20,10 +18,10 @@ import configureI18n from '@/middlewares/configureI18n'
 import countMessage from '@/middlewares/countMessage'
 import disallowPrivate from '@/middlewares/disallowPrivate'
 import engines from '@/engines'
+
 import handleAddPromoException from '@/commands/handleAddPromoException'
 import handleAudio from '@/handlers/handleAudio'
 import handleDisableGoogle from '@/commands/handleDisableGoogle'
-import handleDonate from '@/commands/handleDonate'
 import handleEnableGoogle from '@/commands/handleEnableGoogle'
 import handleEngine from '@/commands/handleEngine'
 import handleFiles from '@/commands/handleFiles'
@@ -46,6 +44,7 @@ import handleTranscribeAll from './commands/handleTranscribeAll'
 import handleUrl from '@/commands/handleUrl'
 import handleViewPromoExceptions from './commands/handleViewPromoExceptions'
 import handleWitToken from '@/commands/handleWitToken'
+
 import i18n from '@/helpers/i18n'
 import ignoreOldMessageUpdates from '@/middlewares/ignoreOldMessageUpdates'
 import recordTimeReceived from '@/middlewares/recordTimeReceived'
@@ -53,9 +52,10 @@ import startMongo from '@/helpers/startMongo'
 
 async function runApp() {
   console.log('Starting app...')
-  // Mongo
+
   await startMongo()
   console.log('Mongo started')
+
   // Middlewares
   bot.use(recordTimeReceived)
   bot.use(countMessage)
@@ -64,7 +64,8 @@ async function runApp() {
   bot.use(i18n.middleware())
   bot.use(configureI18n)
   bot.use(checkBanned)
-  // Various events
+
+  // Events
   bot.on('my_chat_member', handleMyChatMember)
   bot.on(':document', checkGoogleCredentials)
   bot.on([':voice', ':video_note'], handleAudio)
@@ -74,9 +75,9 @@ async function runApp() {
     checkDocumentType,
     handleAudio
   )
-  // Commands
+
+  // Commands (❌ donate УДАЛЕН)
   bot.command('id', handleId)
-  bot.command('donate', handleDonate)
   bot.command('start', checkAdminLock, handleStart)
   bot.command('help', checkAdminLock, handleHelp)
   bot.command('lock', disallowPrivate, checkAdminLock, handleLock)
@@ -97,19 +98,22 @@ async function runApp() {
   bot.command('viewPromoExceptions', checkSuperAdmin, handleViewPromoExceptions)
   bot.command('transcribeAll', checkAdminLock, handleTranscribeAll)
   bot.command('transcribe', checkAdminLock, handleTranscribe)
-  // Callabcks
+
+  // Callbacks
   bot.callbackQuery(Object.keys(engines), handleSetEngine)
   bot.callbackQuery(/li.+/, handleSetLanguage)
+
   // Errors
   bot.catch(console.error)
+
   // Start bot
   await bot.init()
   run(bot)
+
   console.info(`Bot ${bot.botInfo.username} is up and running`)
-  // Start webhook app
-  webhookApp.listen(4242, () => console.log('Running on port 4242'))
 }
 
+// Запуск
 if (Cluster.isPrimary) {
   void runApp()
 }
