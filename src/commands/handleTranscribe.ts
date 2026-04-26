@@ -1,4 +1,3 @@
-import { ChatModel } from '@/models/Chat'
 import { sendTranscription } from '@/handlers/handleAudio'
 import Context from '@/models/Context'
 import fileUrl from '@/helpers/fileUrl'
@@ -6,23 +5,10 @@ import report from '@/helpers/report'
 
 export default async function handleTranscribe(ctx: Context) {
   try {
-    if (!ctx.dbchat.paid) {
-      console.log('Sending the donate message')
-      await ctx.reply(ctx.i18n.t('sunsetting'), {
-        parse_mode: 'Markdown',
-        reply_to_message_id: ctx.msg.message_id,
-        disable_web_page_preview: true,
-      })
-      return
-    }
-    if (!ctx.dbchat.paid) {
-      await ChatModel.updateOne(
-        { id: ctx.dbchat.id },
-        { $inc: { freeVoicesUsed: 1 } }
-      )
-    }
+    // ❌ УБРАНО: paid и донат
 
     const message = ctx.msg.reply_to_message
+
     if (!message) {
       await ctx.reply(ctx.i18n.t('reply_to_voice'), {
         reply_to_message_id: ctx.msg.message_id,
@@ -50,13 +36,15 @@ export default async function handleTranscribe(ctx: Context) {
       }
       return
     }
-    // Get full url to the voice message
+
+    // Get file URL
     const fileData = await ctx.api.getFile(voice.file_id)
     const voiceUrl = fileUrl(fileData.file_path)
 
-    // Sets message id to the original voice message's id
+    // Привязываем ответ к оригинальному сообщению
     ctx.msg.message_id = message.message_id
-    // Send action or transcription depending on whether chat is silent
+
+    // Отправляем распознавание
     await sendTranscription(ctx, voiceUrl, voice.file_id)
   } catch (error) {
     report(error, { ctx, location: 'handleTranscribe' })
