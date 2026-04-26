@@ -4,7 +4,6 @@ import 'module-alias/register'
 import * as dotenv from 'dotenv'
 dotenv.config({ path: `${__dirname}/../.env` })
 
-import { run } from '@grammyjs/runner'
 import Cluster from '@/helpers/Cluster'
 import attachChat from '@/middlewares/attachChat'
 import bot from '@/helpers/bot'
@@ -48,7 +47,7 @@ import recordTimeReceived from '@/middlewares/recordTimeReceived'
 import startMongo from '@/helpers/startMongo'
 
 async function runApp() {
-  console.log('🚀 CLEAN BUILD STARTED') // 👈 МАРКЕР
+  console.log('🚀 CLEAN BUILD STARTED')
 
   await startMongo()
   console.log('Mongo started')
@@ -101,9 +100,9 @@ async function runApp() {
   // Errors
   bot.catch(console.error)
 
-  // Start bot
+  // Start bot (ВАЖНО: БЕЗ runner)
   await bot.init()
-  run(bot)
+  bot.start()
 
   console.info(`Bot ${bot.botInfo.username} is up and running`)
 }
