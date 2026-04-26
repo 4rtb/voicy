@@ -52,7 +52,6 @@ export class Chat extends FindOrCreate {
   })
   languages: Languages
   @prop({ required: true, default: false })
-  paid: boolean
   @prop({ required: true, default: false })
   banned: boolean
   @prop({ required: true, default: 0 })
