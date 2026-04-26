@@ -11,30 +11,19 @@ import urlToText from '@/helpers/urlToText'
 
 export default async function handleAudio(ctx: Context) {
   try {
-    if (!ctx.dbchat.paid) {
-      console.log('Sending the donate message')
-      await ctx.reply(ctx.i18n.t('sunsetting'), {
-        parse_mode: 'Markdown',
-        reply_to_message_id: ctx.msg.message_id,
-        disable_web_page_preview: true,
-      })
-      return
-    }
-    if (!ctx.dbchat.paid) {
-      await ChatModel.updateOne(
-        { id: ctx.dbchat.id },
-        { $inc: { freeVoicesUsed: 1 } }
-      )
-    }
+    // ❌ УБРАНО: проверка paid
+
     // In a group or supergroup, only transcribe if transcribeAllAudio is true
     const isGroup = ctx.chat.type === 'group' || ctx.chat.type === 'supergroup'
     if (!ctx.dbchat.transcribeAllAudio && isGroup) {
       console.log('Ignored cause transcribeAllAudio is false')
       return
     }
+
     const message = ctx.msg
     const voice =
       message.voice || message.document || message.audio || message.video_note
+
     // Check size
     if (voice.file_size && voice.file_size >= 19 * 1024 * 1024) {
       if (!ctx.dbchat.silent) {
@@ -42,10 +31,12 @@ export default async function handleAudio(ctx: Context) {
       }
       return
     }
+
     // Get full url to the voice message
     const fileData = await ctx.getFile()
     const voiceUrl = fileUrl(fileData.file_path)
-    // Send action or transcription depending on whether chat is silent
+
+    // Send transcription
     await sendTranscription(ctx, voiceUrl, voice.file_id)
   } catch (error) {
     report(error, { ctx, location: 'handleMessage' })
@@ -60,8 +51,8 @@ function sendLargeFileError(ctx: Context) {
 }
 
 async function sendTranscription(ctx: Context, url: string, fileId: string) {
-  // Send typing action or dummy message
   let dummyMessage: Message
+
   if (ctx.dbchat.silent) {
     await ctx.replyWithChatAction('typing')
   } else {
@@ -70,29 +61,28 @@ async function sendTranscription(ctx: Context, url: string, fileId: string) {
       parse_mode: 'Markdown',
     })
   }
-  // Check if ok with google engine
+
+  // Google creds check
   if (ctx.dbchat.engine === 'google' && !ctx.dbchat.googleKey) {
     if (dummyMessage) {
       await ctx.api.editMessageText(
         ctx.dbchat.id,
         dummyMessage.message_id,
         ctx.i18n.t('google_error_creds'),
-        {
-          parse_mode: 'Markdown',
-        }
+        { parse_mode: 'Markdown' }
       )
     }
     return
   }
+
   try {
-    // Convert utl to text
     const { textWithTimecodes, duration } = await urlToText(
       url,
       sanitizeChat(ctx.dbchat),
       ctx.msg.forward_from?.id || ctx.from?.id,
       ctx.msg.forward_sender_name
     )
-    // Send trancription to user
+
     const text = ctx.dbchat.timecodesEnabled
       ? textWithTimecodes
           .map((t) => `${t.timeCode}:\n${t.text || ''}`)
@@ -101,8 +91,10 @@ async function sendTranscription(ctx: Context, url: string, fileId: string) {
           .map((t) => (t.text || '').trim())
           .filter((v) => !!v)
           .join('. ')
+
     const texts = splitText(text) || ['']
-    const firstText = texts.shift().trim()
+    const firstText = texts.shift()?.trim()
+
     if (dummyMessage) {
       await ctx.api.editMessageText(
         ctx.dbchat.id,
@@ -122,15 +114,15 @@ async function sendTranscription(ctx: Context, url: string, fileId: string) {
         disable_web_page_preview: true,
       })
     }
-    if (texts.length) {
-      for (const element of texts) {
-        await ctx.reply(element, {
-          reply_to_message_id: ctx.msg.message_id,
-          parse_mode: 'Markdown',
-          disable_web_page_preview: true,
-        })
-      }
+
+    for (const element of texts) {
+      await ctx.reply(element, {
+        reply_to_message_id: ctx.msg.message_id,
+        parse_mode: 'Markdown',
+        disable_web_page_preview: true,
+      })
     }
+
     await addVoice({
       url,
       textWithTimecodes,
@@ -141,50 +133,52 @@ async function sendTranscription(ctx: Context, url: string, fileId: string) {
   } catch (error) {
     if (dummyMessage) {
       let text = ctx.i18n.t('error')
+
       if (ctx.dbchat.engine === Engine.google) {
         text = `${text}\n\n\`\`\`\n${error.message || 'Unknown error'}\n\`\`\``
       }
+
       try {
         await ctx.api.editMessageText(
           ctx.dbchat.id,
           dummyMessage.message_id,
           text,
-          {
-            parse_mode: 'Markdown',
-          }
+          { parse_mode: 'Markdown' }
         )
-      } catch (error) {
-        report(error, { ctx, location: 'updateMessagewithError' })
+      } catch (err) {
+        report(err, { ctx, location: 'updateMessageWithError' })
       }
     }
+
+    // Remove bad Wit token
     try {
-      // Check if it's the wrong wit token and remove it
       if (ctx.dbchat.engine === Engine.wit && ctx.dbchat.witToken) {
         const errors = [
           'Invalid character in header content',
           'Bad auth, check token/params',
         ]
-        if (errors.find((e) => error.message?.includes(e))) {
+
+        if (errors.some((e) => error.message?.includes(e))) {
           ctx.dbchat.witToken = undefined
           await ctx.dbchat.save()
         }
       }
-    } catch (error) {
-      report(error, { ctx, location: 'removeBadWitToken' })
+    } catch (err) {
+      report(err, { ctx, location: 'removeBadWitToken' })
     }
+
     report(error, { ctx, location: 'sendTranscription' })
   } finally {
     console.info(
-      `audio message processed in ${
-        (new Date().getTime() - ctx.timeReceived.getTime()) / 1000
+      `audio processed in ${
+        (Date.now() - ctx.timeReceived.getTime()) / 1000
       }s`
     )
   }
 }
 
 function splitText(text: string): string[] {
-  const chunks = text.match(/[\s\S]{1,4000}/g)
-  return chunks
+  return text.match(/[\s\S]{1,4000}/g) || []
 }
 
 function sanitizeChat(chat: Chat): Partial<Chat> {
