@@ -1,49 +1,64 @@
-files_false: "\U0001F4C1 Wonderful! *Voicy* will *ignore* all audio files in this chat since now."
-files_true: "\U0001F4C1 Wonderful! *Voicy* will *try to recognize* all audio files in this chat since now."
-google: 'Reply to this message with the Google Cloud credentials file (.json) to set up Google Speech voice recognition. Not sure what is this and how to get it? Check out [our quick tutorial](https://medium.com/@nikitakolmogorov/setting-up-google-speech-for-voicybot-b806545750f8).'
-google_error_doc: 'Sorry, you should reply with a credentials document.'
-google_error_mime: "Sorry, document's mime type should be 'text/plain'."
-google_success: 'Congratulations! *Voicy* got the credentials file for the *${projectId}* Google Cloud Project. Now you can use Google Speech recognition.'
-help: "\U0001F60E *Voicy* converts speech to text from any voice messages and audio files (.ogg, .flac, .wav, .mp3) it receives. You can either talk to *Voicy* in the private chat or add it to a group.\n\nIf you want to use this bot in private messages, please, create a private group with anyone and add *Voicy* there. If you want to add *Voicy* to a group chat, please, add it as a participant on the group profile or to the group in the *Voicy* bot profile.\n\n/help — Shows this message \U0001F631\n/engine — Lets you pick a voice recognition engine: wit.ai or Google Speech ⚙\n/language — Lets you pick a voice recognition language \U0001F4E3\n/lock — Toggles lock or unlock of non-admins using commands in group chats \U0001F511\n/files — Toggles if the bot should attempt to convert audio files or just ignore them \U0001F4C1\n/silent — Toggles silent mode when no extra messages like `Voice recognition is initiated` are sent \U0001F636\n/google — Set up google credentials for Google Speech \U0001F986\n/geeky — The rest of extra functions mostly used by advanced users (like sharing google credentials or bypassing 20Mb Telegram limit) \U0001F47B\n/privacy — Privacy policy\n/witToken — Setting your own Wit token in the format `/witToken 123456789`\n/transcribeAll - To toggle transcribing all voice messages in the chat (effective only for group/supergroup chats)\n/transcribe - To transcribe a specific voice message\n\nDo you want to support the bot's author? I wrote a scientific book about how to live healthier and happier! You can buy it on Amazon — amazon.com/dp/B0CHL7WRYM or on the book's website — wdlaty.com. Thank you!"
-error_group: "\U0001F605 Sorry, but this command only works in group chats."
-lock_true: "\U0001F511 Great! *Voicy* will now respond only to command calls sent by *admins* in this chat."
-lock_false: "\U0001F511 Great! *Voicy* will now respond only to command calls from *anyone* in this chat."
-silent_true: "\U0001F636 Magnificent! *Voicy* will now work in *silent mode*: it will not send any messages to the chat except for the actual voice transcriptions."
-silent_false: "\U0001F60F Magnificent! *Voicy* will now work in *usual mode*: it will send `Voice recognition is initiated` messages right after it receives voice messages."
-start: "\U0001F44B Hello there! *Voicy* is a voice recognition bot that converts all voice messages and audio files (.ogg, .flac, .wav, .mp3) it gets into text.\n\n*Voicy* supports two voice recognition engines: wit.ai and Google Speech. Initially, it's set to use wit.ai but you can switch to Google Speech anytime in /engine. More information in /help.\n"
-engine: "\U0001F44B Please, select the engine of speech recognition. Google Speech is more accurate but has to be set up with your Google Cloud credentials (a bit tedious). Wit.ai is less accurate but free. Please, note that both of them support different languages, so pick the one that suits you the best."
-callback_error: Only the person who started the command can select options
-engine_success: "\U0001F44D Now *Voicy* uses *${engine}* in this chat. Thank you! Don't forget to set /language."
-language: "\U0001F44B Please select the language of speech recognition for ${engine}"
-language_without_engine: "\U0001F44B Please select the language of speech recognition"
-language_success: "\U0001F44D Now *Voicy* speaks *${language}* (${engine}) in this chat. Thank you!"
-error_twenty: "_\U0001F46E I can't recognize voice messages larger than 20 megabytes_"
-initiated: "_\U0001F984 Voice recognition is initiated..._"
-speak_clearly: "_\U0001F46E Please, speak clearly, I couldn't recognize that_"
-error: "_\U0001F46E I couldn't recognize that_"
-google_error_creds: "\U0001F62E Please, set up google credentials with the /google command or change the engine with the /engine command. Your credentials are not set up yet."
-ashmanov_language: 'Nanosemantics only supports Russian. Please, change /engine to change /language first.'
-geeky: |
-  Welcome to the dark side, I'll be your guide. Please, enjoy the following functions responsibly (or not, you decide). If you have any questions about the geeky functions — bypass the @borodutch\_support and send requests directly to @borodutch. I value your opinion and suggestions, fellow power users!
+files_false: "📁 Great! The bot will now *ignore* all audio files in this chat."
+files_true: "📁 Great! The bot will now *convert* all audio files in this chat."
 
-  /enableGoogle — Share your personal Google credentials with this chat without exposing them
-  /disableGoogle — Remove your personal Google credentials from this chat without exposing them
-  /timecodes — Toggle timecodes in the transcriptions (when *Voicy* specifies the timecodes for each piece of transcribed audio)
-  /url — Bypass the 20Mb Telegram limit
-  /l — The same as /language
-  `/l en` — Shortcut to change language, try it out with different language codes
-google_enable_personal_not_setup: 'Looks like your personal Google Cloud credentials were not set yet. Please, do so in @voicybot before trying to enable your Google key in this chat.'
-google_enable_success: Wonderful. Your Google Cloud credentials will now be used in this chat.
-google_disable_personal_not_setup: 'Looks like your personal Google Cloud credentials were not set yet. Please, do so in @voicybot before trying to disable your Google key in this chat.'
-google_disable_success: Wonderful. Your Google Cloud credentials will not be used in this chat anymore.
-oops: "Ooopsie! I haven't implemented this feature yet. But be rest assured: I've received your request for it and will know that you need this feature. Thank you!"
-timecodes_true: Nice! Now *Voicy* will add timecodes to the recognized text.
-timecodes_false: Nice! Now *Voicy* will not add timecodes to the recognized text.
-url: 'If you want to bypass the Telegram limit of 20Mb per file, you can use voicybot.com directly. Cheers!'
-sunsetting: Free Voicy will no longer work. See [this post](https://blog.borodutch.com/im-sunsetting-voicy/) for the details and if you want to buy the bot. If you want to keep using Voicy, you have to make a one-time donation of $6.99 by using /donate. Cheers!
-already_paid: You've already donated to Voicy. Thank you!
-pay: 'Click the button below to donate $6.99. Or you can send $6.99 worth of tokens to `borodutch.eth` and send @borodutch the transaction. Thank you so much for your support!'
-pay_button: Donate $6.99
-transcribe_all_true: 'Perfect, Voicy will now *convert all voice messages* it receives in this chat.'
-transcribe_all_false: 'Got it, Voicy will now *ignore all voice messages* it receives in this chat. You can send /transcribe to convert a specific voice message.'
-reply_to_voice: 'Please, reply to the voice message you want to transcribe.'
+google: "Reply with your Google Cloud credentials (.json) to enable Google Speech recognition."
+google_error_doc: "Please send a valid credentials file."
+google_error_mime: "File must be 'text/plain'."
+google_success: "✅ Google Speech enabled for project *${projectId}*."
+
+help: "😎 *This bot converts voice messages and audio files (.ogg, .flac, .wav, .mp3) into text.*\n\nCommands:\n/help — help\n/engine — choose engine\n/language — choose language\n/lock — admin-only mode\n/files — toggle audio files\n/silent — silent mode\n/google — connect Google Speech\n/geeky — advanced features\n/privacy — privacy\n/witToken — set Wit.ai token\n/transcribeAll — auto transcribe\n/transcribe — transcribe one message"
+
+error_group: "😅 This command works only in group chats."
+
+lock_true: "🔒 Now only admins can use commands."
+lock_false: "🔓 Now everyone can use commands."
+
+silent_true: "😶 Silent mode enabled — only results will be sent."
+silent_false: "😏 Normal mode — bot will show processing messages."
+
+start: "👋 Hello! I convert voice messages into text.\n\nUse /help to see commands."
+
+engine: "Choose speech recognition engine:\n— Google (more accurate)\n— Wit.ai (free and simple)\n— Nanosemantics (Russian only)"
+
+callback_error: "Only the user who started this can change settings."
+
+engine_success: "✅ Engine set to *${engine}*. Don't forget /language."
+
+language: "Choose recognition language for ${engine}"
+language_without_engine: "Select engine first using /engine"
+language_success: "✅ Language set to *${language}* (${engine})"
+
+error_twenty: "🚫 Files larger than 20MB are not supported."
+initiated: "🧠 Processing..."
+speak_clearly: "🤔 Try speaking more clearly."
+error: "❌ Couldn't recognize audio."
+
+google_error_creds: "⚠️ Set up Google credentials with /google or switch engine."
+
+ashmanov_language: "Nanosemantics supports only Russian. Change engine first."
+
+geeky: |
+  Advanced mode:
+
+  /enableGoogle — use your Google key
+  /disableGoogle — remove Google key
+  /timecodes — toggle timestamps
+  /url — bypass 20MB limit
+  /l — shortcut for language (`/l en`)
+
+google_enable_personal_not_setup: "Set your Google credentials in private chat first."
+google_enable_success: "✅ Google key enabled."
+google_disable_personal_not_setup: "Google credentials not found."
+google_disable_success: "❌ Google key disabled."
+
+oops: "Feature not implemented yet 😅"
+
+timecodes_true: "⏱ Timecodes enabled."
+timecodes_false: "⏱ Timecodes disabled."
+
+url: "Use direct upload to bypass 20MB limit."
+
+transcribe_all_true: "✅ Now all voice messages will be transcribed."
+transcribe_all_false: "❌ Voice messages will be ignored (use /transcribe)."
+
+reply_to_voice: "Reply to a voice message to transcribe it."
