@@ -48,7 +48,7 @@ import recordTimeReceived from '@/middlewares/recordTimeReceived'
 import startMongo from '@/helpers/startMongo'
 
 async function runApp() {
-  console.log('Starting app...')
+  console.log('🚀 CLEAN BUILD STARTED') // 👈 МАРКЕР
 
   await startMongo()
   console.log('Mongo started')
