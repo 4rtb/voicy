@@ -4,15 +4,12 @@ import { addVoice } from '@/models/Voice'
 import { pick } from 'lodash'
 import Context from '@/models/Context'
 import Engine from '@/helpers/engine/Engine'
-import addPromoToText from '@/helpers/addPromoToText'
 import fileUrl from '@/helpers/fileUrl'
 import report from '@/helpers/report'
 import urlToText from '@/helpers/urlToText'
 
 export default async function handleAudio(ctx: Context) {
   try {
-    // ❌ УБРАНО: проверка paid
-
     // In a group or supergroup, only transcribe if transcribeAllAudio is true
     const isGroup = ctx.chat.type === 'group' || ctx.chat.type === 'supergroup'
     if (!ctx.dbchat.transcribeAllAudio && isGroup) {
@@ -51,7 +48,7 @@ function sendLargeFileError(ctx: Context) {
 }
 
 async function sendTranscription(ctx: Context, url: string, fileId: string) {
-  let dummyMessage: Message
+  let dummyMessage: Message | undefined
 
   if (ctx.dbchat.silent) {
     await ctx.replyWithChatAction('typing')
@@ -92,23 +89,21 @@ async function sendTranscription(ctx: Context, url: string, fileId: string) {
           .filter((v) => !!v)
           .join('. ')
 
-    const texts = splitText(text) || ['']
+    const texts = splitText(text)
     const firstText = texts.shift()?.trim()
 
     if (dummyMessage) {
       await ctx.api.editMessageText(
         ctx.dbchat.id,
         dummyMessage.message_id,
-        firstText
-          ? addPromoToText(ctx, firstText)
-          : ctx.i18n.t('speak_clearly'),
+        firstText || ctx.i18n.t('speak_clearly'),
         {
           parse_mode: 'Markdown',
           disable_web_page_preview: true,
         }
       )
     } else if (firstText) {
-      await ctx.reply(addPromoToText(ctx, firstText), {
+      await ctx.reply(firstText, {
         reply_to_message_id: ctx.msg.message_id,
         parse_mode: 'Markdown',
         disable_web_page_preview: true,
@@ -130,7 +125,7 @@ async function sendTranscription(ctx: Context, url: string, fileId: string) {
       duration,
       fileId,
     })
-  } catch (error) {
+  } catch (error: any) {
     if (dummyMessage) {
       let text = ctx.i18n.t('error')
 
