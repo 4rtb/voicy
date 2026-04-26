@@ -33,7 +33,6 @@
     "lodash": "^4.17.21",
     "mongoose": "6.0.12",
     "mongoose-findorcreate": "^3.0.0",
-    "stripe": "^10.15.0",
     "temp": "^0.9.4",
     "uuid": "^8.3.2"
   },
